@@ -29,5 +29,5 @@ RUN python manage.py seed_words || true
 
 EXPOSE 8000
 
-# Run with Daphne ASGI Server
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+# Run migrations, seed words, and start Daphne on dynamic PORT
+CMD ["sh", "-c", "python manage.py migrate && python manage.py seed_words && daphne -b 0.0.0.0 -p ${PORT:-8000} config.asgi:application"]
