@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Word Packs - DRAW & DECEIVE{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 1rem auto; display: flex; flex-direction: column; gap: 2rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.25rem;">Word Packs &amp; Topics</h1>
+      <p style="color: var(--text-muted);">Explore built-in categories or build your own custom word lists for private party matches.</p>
+    </div>
+    <a href="#create-pack-form" class="btn btn-primary">
+      <span>➕</span> Create New Word Pack
+    </a>
+  </div>
+
+  <!-- Standard Curated Word Categories Overview -->
+  <section class="card" style="padding: 1.8rem 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.35rem; font-weight: 800;">Curated Built-in Word Categories</h2>
+      <span class="pill-badge purple" style="font-size: 0.85rem;">{{ total_curated_words }} Total Active Words</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+      {% for cat_key, cat_name in categories %}
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+        <div style="font-weight: 700; font-size: 1rem; color: var(--text-main); margin-bottom: 0.25rem;">{{ cat_name }}</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">Easy, Medium &amp; Hard words with hints</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Community & Custom Word Packs List -->
+  <section>
+    <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 1rem;">Custom Word Packs</h2>
+    {% if public_packs %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
+      {% for pack in public_packs %}
+      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <h3 style="font-size: 1.15rem; font-weight: 800;">{{ pack.name }}</h3>
+            <span class="pill-badge cyan">{{ pack.word_count }} words</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+            {{ pack.description|default:"Custom party word pack." }}
+          </p>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-dim);">
+          Created by <strong>{{ pack.owner.nickname|default:"Community" }}</strong>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+      No custom word packs created yet. Be the first to build one below!
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Create Word Pack Form -->
+  <section id="create-pack-form" class="card" style="padding: 2rem 2.2rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">Create a Custom Word Pack</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+      Add words for inside jokes, themed parties, college courses, or company trivia.
+    </p>
+
+    <form action="{% url 'create_word_pack' %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label" for="pack-name">Pack Name</label>
+        <input type="text" id="pack-name" name="name" class="form-input" placeholder="e.g. 90s Nostalgia, Marvel Heroes, Anime" maxlength="80" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="pack-desc">Description (Optional)</label>
+        <input type="text" id="pack-desc" name="description" class="form-input" placeholder="Short description of this word list..." maxlength="200">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="pack-words">Word List (One word per line, optional hint after a comma)</label>
+        <textarea id="pack-words" name="words" class="form-textarea" rows="6" placeholder="iron man, superhero with arc reactor&#10;spiderman, web slinger from queens&#10;thor, god of thunder with hammer&#10;hulk, giant green smash monster&#10;hawkeye, master archer" required></textarea>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Format: <code>word, optional hint</code> (Minimum 5 words)</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin: 1.25rem 0;">
+        <input type="checkbox" id="pack-public" name="is_public" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+        <label for="pack-public" style="font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+          Make this word pack public for other rooms to choose
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg">
+        <span>💾</span> Save Word Pack
+      </button>
+    </form>
+  </section>
+</div>
+{% endblock %}

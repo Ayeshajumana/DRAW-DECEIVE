@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}Room {{ room.code }} - DRAW & DECEIVE{% endblock %}
+
+{% block content %}
+<div class="lobby-wrapper">
+  <!-- ==================================================================== -->
+  <!-- LOBBY SCREEN (Waiting to Start)                                      -->
+  <!-- ==================================================================== -->
+  <div id="lobby-container" style="{% if room.status != 'waiting' %}display: none;{% endif %}">
+    <div class="card room-header-card">
+      <div class="room-meta-group">
+        <div class="room-title-row">
+          <span style="font-size: 1.8rem;">🎪</span>
+          <h1 class="room-name-display">{{ room.name }}</h1>
+        </div>
+        <div class="room-badges">
+          <span class="pill-badge purple">{{ room.num_rounds }} Rounds</span>
+          <span class="pill-badge cyan">{{ room.draw_time }}s Timer</span>
+          <span class="pill-badge">{{ room.difficulty|title }}</span>
+          <span class="pill-badge">{{ room.category|title }}</span>
+          {% if room.word_pack %}
+          <span class="pill-badge purple">Pack: {{ room.word_pack.name }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Room Code & Copy Link -->
+      <div class="room-code-box">
+        <span class="code-label">Room Code:</span>
+        <span class="code-value">{{ room.code }}</span>
+        <button type="button" class="btn-copy" id="btn-copy-invite" title="Copy shareable link">
+          <span>📋</span> Copy Link
+        </button>
+      </div>
+    </div>
+
+    <!-- Players in Lobby Grid -->
+    <div class="lobby-players-section" style="margin-top: 1.5rem;">
+      <div class="section-header-row">
+        <h2 class="section-title">Players in Lobby</h2>
+        <span class="player-count-indicator" id="lobby-player-count">({{ room.player_count }}/{{ room.max_players }} Players)</span>
+      </div>
+
+      <div class="lobby-players-grid" id="lobby-players-grid">
+        {% for p in room.players.all %}
+        <div class="lobby-player-card">
+          <div class="player-avatar-large" style="background: {{ p.avatar_info.bg }};">
+            {{ p.avatar_info.emoji }}
+            {% if p.is_host %}<div class="host-badge-icon" title="Room Host">★</div>{% endif %}
+          </div>
+          <div class="player-card-name">{{ p.nickname }}</div>
+          <div class="player-status-tag {% if p.is_ready %}ready{% else %}waiting{% endif %}">
+            {% if p.is_ready %}READY ✓{% else %}WAITING{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Lobby Bottom Actions -->
+    <div class="card lobby-actions-card" style="margin-top: 1.5rem;">
+      <div class="lobby-controls-left">
+        <button type="button" class="btn btn-outline" id="btn-toggle-ready">
+          <span>👍</span> Toggle Ready
+        </button>
+        <a href="{% url 'leave_room' room.code %}" class="btn btn-outline" style="color: var(--accent-pink);">
+          <span>🚪</span> Leave Room
+        </a>
+      </div>
+
+      <div class="lobby-controls-right">
+        {% if is_host %}
+        <div id="lobby-min-players-note" class="min-players-warning" style="{% if room.can_start %}display: none;{% endif %}">
+          ⚠️ Need at least 2 players to start
+        </div>
+        <button type="button" class="btn btn-primary btn-lg" id="btn-start-match" {% if not room.can_start %}disabled{% endif %}>
+          <span>🚀</span> START GAME
+        </button>
+        {% else %}
+        <div style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;">
+          Waiting for host to start the match...
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MAIN MULTIPLAYER GAME ARENA                                          -->
+  <!-- ==================================================================== -->
+  <div id="game-arena-container" class="game-arena-wrapper" style="{% if room.status == 'waiting' %}display: none;{% endif %}">
+    <!-- Top Game Status Bar -->
+    <div class="game-top-bar">
+      <div class="game-round-pill" id="game-round-text">
+        Round 1 / {{ room.num_rounds }}
+      </div>
+
+      <div class="game-drawer-info">
+        <div class="drawer-avatar-tiny" id="game-drawer-avatar" style="background: #f97316;">🦊</div>
+        <div>
+          <div class="drawer-label">Current Drawer</div>
+          <div class="drawer-name" id="game-drawer-name">Artist</div>
+        </div>
+      </div>
+
+      <!-- Secret Word / Hints -->
+      <div class="game-word-container">
+        <span class="word-category-tag" id="game-category-tag">General</span>
+        <div class="secret-word-display" id="game-word-display">_ _ _ _ _</div>
+      </div>
+
+      <!-- Synchronized Countdown Timer -->
+      <div class="game-timer-box" id="game-timer">
+        {{ room.draw_time }}
+      </div>
+    </div>
+
+    <!-- 3-Column Arena Grid: Leaderboard | Canvas & Tools | Chat & Guessing -->
+    <div class="arena-grid">
+      <!-- Left Column: Live Leaderboard -->
+      <div class="arena-panel">
+        <div class="panel-header">
+          <span>🏆 Leaderboard</span>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">LIVE</span>
+        </div>
+        <div class="leaderboard-list" id="leaderboard-list">
+          <!-- Dynamically populated by game.js -->
+        </div>
+      </div>
+
+      <!-- Middle Column: HTML5 Canvas & Toolbar -->
+      <div class="canvas-area-wrapper">
+        <div class="canvas-card">
+          <canvas id="drawing-canvas"></canvas>
+          <div class="canvas-spectator-badge" id="spectator-badge" style="display: none;">
+            <span>👁️</span> Watching artist draw...
+          </div>
+        </div>
+
+        <!-- Drawing Toolbar (Active Drawer Only) -->
+        <div class="drawing-toolbar" id="drawing-toolbar" style="display: none;">
+          <!-- Tool Selection -->
+          <div class="toolbar-group">
+            <button type="button" class="tool-btn active" data-tool="brush" title="Pencil / Brush">✏️</button>
+            <button type="button" class="tool-btn" data-tool="eraser" title="Eraser">🧹</button>
+            <button type="button" class="tool-btn" data-tool="line" title="Straight Line">📏</button>
+            <button type="button" class="tool-btn" data-tool="rect" title="Rectangle">⬜</button>
+            <button type="button" class="tool-btn" data-tool="circle" title="Circle">⭕</button>
+          </div>
+
+          <!-- Color Swatches Palette -->
+          <div class="toolbar-group">
+            <div class="color-swatches-grid">
+              <button type="button" class="color-swatch active" data-color="#000000" style="background:#000000;"></button>
+              <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff;"></button>
+              <button type="button" class="color-swatch" data-color="#ef4444" style="background:#ef4444;"></button>
+              <button type="button" class="color-swatch" data-color="#f97316" style="background:#f97316;"></button>
+              <button type="button" class="color-swatch" data-color="#eab308" style="background:#eab308;"></button>
+              <button type="button" class="color-swatch" data-color="#10b981" style="background:#10b981;"></button>
+              <button type="button" class="color-swatch" data-color="#06b6d4" style="background:#06b6d4;"></button>
+              <button type="button" class="color-swatch" data-color="#3b82f6" style="background:#3b82f6;"></button>
+              <button type="button" class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6;"></button>
+              <button type="button" class="color-swatch" data-color="#ec4899" style="background:#ec4899;"></button>
+              <button type="button" class="color-swatch" data-color="#854d0e" style="background:#854d0e;"></button>
+              <button type="button" class="color-swatch" data-color="#64748b" style="background:#64748b;"></button>
+            </div>
+            <input type="color" id="custom-color-picker" class="color-picker-input" value="#000000" title="Custom Color Picker">
+          </div>
+
+          <!-- Brush Thickness -->
+          <div class="toolbar-group size-selector-group">
+            <button type="button" class="size-btn" data-size="2" title="Thin (2px)"><span class="size-dot" style="width:3px;height:3px;"></span></button>
+            <button type="button" class="size-btn active" data-size="4" title="Regular (4px)"><span class="size-dot" style="width:6px;height:6px;"></span></button>
+            <button type="button" class="size-btn" data-size="8" title="Medium (8px)"><span class="size-dot" style="width:10px;height:10px;"></span></button>
+            <button type="button" class="size-btn" data-size="14" title="Thick (14px)"><span class="size-dot" style="width:14px;height:14px;"></span></button>
+            <button type="button" class="size-btn" data-size="24" title="Jumbo (24px)"><span class="size-dot" style="width:20px;height:20px;"></span></button>
+          </div>
+
+          <!-- Undo & Clear -->
+          <div class="toolbar-group">
+            <button type="button" class="tool-btn" id="btn-undo" title="Undo Last Stroke (Ctrl+Z)">↩️</button>
+            <button type="button" class="tool-btn" id="btn-clear" title="Clear Canvas" style="color:var(--accent-pink);">🗑️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Chat & Guess Stream -->
+      <div class="arena-panel chat-panel">
+        <div class="panel-header">
+          <span>💬 Live Chat &amp; Guesses</span>
+        </div>
+        <div class="chat-messages-container" id="chat-messages">
+          <div class="chat-msg system">
+            Welcome to the room! Guess the secret word in the box below.
+          </div>
+        </div>
+        <form class="chat-input-form" id="chat-form">
+          <input type="text" id="chat-input" class="chat-input" placeholder="Type your guess here..." maxlength="150" autocomplete="off" required>
+          <button type="submit" class="btn btn-secondary btn-sm">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- ROUND RESULTS MODAL                                                  -->
+<!-- ==================================================================== -->
+<div class="modal-backdrop" id="round-results-modal">
+  <div class="modal-dialog">
+    <div class="results-modal-content">
+      <div style="font-size: 2.5rem;">🎉</div>
+      <h2 style="font-size: 1.6rem;">Round Finished!</h2>
+      <p style="color: var(--text-muted);">The secret word was:</p>
+      <div class="round-results-word" id="result-secret-word">WORD</div>
+
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Result</th>
+            <th>Points</th>
+          </tr>
+        </thead>
+        <tbody id="round-results-tbody">
+          <!-- Populated by game.js -->
+        </tbody>
+      </table>
+
+      <div style="font-size: 0.9rem; color: var(--secondary); font-weight: 700;">
+        Next turn starting in a few seconds...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- MATCH FINAL RESULTS & PODIUM MODAL                                   -->
+<!-- ==================================================================== -->
+<div class="modal-backdrop" id="match-results-modal">
+  <div class="modal-dialog" style="max-width: 600px;">
+    <div class="results-modal-content">
+      <div style="font-size: 3rem;">👑</div>
+      <h1 style="font-size: 2.2rem; font-weight: 900;">Match Complete!</h1>
+      <p style="color: var(--text-muted);">Congratulations to the champion artist!</p>
+
+      <!-- Winner Highlight -->
+      <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-lg); padding: 1.25rem; margin: 1rem 0;">
+        <h2 id="winner-nickname" style="font-size: 1.8rem; color: var(--accent-amber); margin-bottom: 0.25rem;">Winner</h2>
+        <div id="winner-score" style="font-size: 1.2rem; font-weight: 800; color: #fde68a;">0 pts</div>
+      </div>
+
+      <!-- Standings Table -->
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="match-results-tbody">
+          <!-- Populated by game.js -->
+        </tbody>
+      </table>
+
+      <!-- Actions -->
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+        {% if is_host %}
+        <button type="button" class="btn btn-primary" id="btn-play-again">
+          <span>🔄</span> Play Again
+        </button>
+        {% endif %}
+        <a href="{% url 'home' %}" class="btn btn-outline">
+          <span>🏠</span> Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Game Session Context variables for JS -->
+<script>
+  window.ROOM_CODE = "{{ room.code }}";
+  window.CURRENT_PLAYER_ID = "{{ player.id }}";
+  window.IS_HOST = {{ is_host|yesno:"true,false" }};
+</script>
+<script src="/static/js/websocket.js"></script>
+<script src="/static/js/canvas.js"></script>
+<script src="/static/js/game.js"></script>
+{% endblock %}

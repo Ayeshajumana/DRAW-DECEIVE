@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}DRAW & DECEIVE - Real-Time Multiplayer Drawing & Guessing Game{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 3rem; margin: 1rem auto; max-width: 1100px;">
+  <!-- Hero Section -->
+  <section class="card" style="padding: 3.5rem 2.5rem; text-align: center; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(20, 28, 48, 0.9) 0%, rgba(11, 15, 25, 0.95) 100%); border-color: rgba(139, 92, 246, 0.3);">
+    <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1.25rem;">
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); padding: 0.35rem 1rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; color: #c4b5fd;">
+        <span>✨</span> REAL-TIME MULTIPLAYER PARTY GAME
+      </div>
+
+      <h1 style="font-size: 3.2rem; font-weight: 900; letter-spacing: -1px; line-height: 1.1;">
+        DRAW, GUESS &amp; <span style="background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 50%, #f43f5e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">OUTSMART</span> YOUR FRIENDS!
+      </h1>
+
+      <p style="font-size: 1.2rem; color: var(--text-muted); line-height: 1.6;">
+        Take turns sketching secret words on a synchronized canvas while your friends frantically race against the ticking clock in live chat!
+      </p>
+
+      <!-- Primary Action Buttons -->
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem;">
+        <a href="{% url 'create_room' %}" class="btn btn-primary btn-lg">
+          <span>🚀</span> Create Private Room
+        </a>
+        <a href="{% url 'join_room' %}" class="btn btn-secondary btn-lg">
+          <span>🔑</span> Join with Code
+        </a>
+      </div>
+
+      <!-- Quick Room Code Enter Form -->
+      <form action="{% url 'join_room' %}" method="POST" style="display: flex; gap: 0.5rem; margin-top: 1rem; max-width: 400px; width: 100%;">
+        {% csrf_token %}
+        <input type="text" name="code" class="form-input" placeholder="ENTER 6-CHAR CODE" maxlength="8" style="text-transform: uppercase; font-weight: 800; font-family: monospace; text-align: center; letter-spacing: 2px;" required>
+        <button type="submit" class="btn btn-accent" style="white-space: nowrap;">Join Game</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- How to Play Section -->
+  <section>
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">How It Works</h2>
+      <p style="color: var(--text-muted);">Three simple steps to start laughing and competing with your friends.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+      <div class="card" style="display: flex; flex-direction: column; gap: 0.75rem; text-align: center; padding: 2rem;">
+        <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">🎪</div>
+        <h3 style="font-size: 1.3rem;">1. Create or Join</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Host a private room, customize draw duration and rounds, then invite friends with a 6-character room code or instant shareable link.
+        </p>
+      </div>
+
+      <div class="card" style="display: flex; flex-direction: column; gap: 0.75rem; text-align: center; padding: 2rem;">
+        <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">🎨</div>
+        <h3 style="font-size: 1.3rem;">2. Draw Your Secret Word</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          When it's your turn, receive a secret word. Use vibrant colors, brush sizes, and shapes to sketch it before the timer runs out.
+        </p>
+      </div>
+
+      <div class="card" style="display: flex; flex-direction: column; gap: 0.75rem; text-align: center; padding: 2rem;">
+        <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">⚡</div>
+        <h3 style="font-size: 1.3rem;">3. Guess Fast for Bonus Points</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Spectators type guesses into the chat. The faster you guess correctly, the higher your speed bonus points!
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+    <div class="card" style="padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+      <span style="font-size: 2rem;">🖌️</span>
+      <div>
+        <h4 style="margin-bottom: 0.25rem;">Ultra-Smooth Canvas</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Touch &amp; mouse support with high-DPI scaling, undo, and brush thickness controls.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+      <span style="font-size: 2rem;">⏱️</span>
+      <div>
+        <h4 style="margin-bottom: 0.25rem;">Server-Sync Timers</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Authoritative server deadlines ensure perfectly synchronized countdowns and hints.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+      <span style="font-size: 2rem;">📚</span>
+      <div>
+        <h4 style="margin-bottom: 0.25rem;">160+ Curated Words</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Animals, Food, Tech, Movies, and custom user-created word packs with progressive hints.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+      <span style="font-size: 2rem;">🏆</span>
+      <div>
+        <h4 style="margin-bottom: 0.25rem;">Live Leaderboards</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Dynamic ranking updates, correct guess celebrations, and end-of-match podiums.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Player Profile / Quick Stats -->
+  {% if current_player %}
+  <section class="card" style="padding: 1.8rem 2.2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: {{ current_player.avatar_info.bg }}; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+        {{ current_player.avatar_info.emoji }}
+      </div>
+      <div>
+        <h3 style="font-size: 1.25rem; font-weight: 800;">Welcome back, {{ current_player.nickname }}!</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Ready for your next sketch session?</p>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+      <div style="text-align: center;">
+        <div style="font-size: 1.4rem; font-weight: 900; color: var(--accent-amber);">{{ current_player.total_score }}</div>
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Career Points</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-size: 1.4rem; font-weight: 900; color: var(--accent-green);">{{ current_player.correct_guesses }}</div>
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Correct Guesses</div>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-size: 1.4rem; font-weight: 900; color: var(--secondary);">{{ current_player.games_won }}</div>
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Matches Won</div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

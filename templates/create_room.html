@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Room - DRAW & DECEIVE{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 1rem auto; width: 100%;">
+  <div class="card" style="padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem;">Create a Game Room</h1>
+      <p style="color: var(--text-muted);">Set up the match settings and invite your friends to play.</p>
+    </div>
+
+    <form action="{% url 'create_room' %}" method="POST">
+      {% csrf_token %}
+
+      <!-- Room Name -->
+      <div class="form-group">
+        <label class="form-label" for="room-name">Room Name (Optional)</label>
+        <input type="text" id="room-name" name="name" class="form-input" placeholder="e.g. Saturday Night Showdown" maxlength="60">
+      </div>
+
+      <!-- Player Identity Customization -->
+      <div class="form-group" style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <label class="form-label" for="player-nickname">Your Nickname</label>
+        <input type="text" id="player-nickname" name="nickname" class="form-input" value="{{ player.nickname }}" maxlength="25" required>
+
+        <label class="form-label" style="margin-top: 0.85rem;">Select Your Avatar</label>
+        <div class="avatar-grid">
+          {% for av in avatars %}
+          <div class="avatar-choice {% if av.key == player.avatar %}selected{% endif %}" 
+               data-key="{{ av.key }}" 
+               style="background: {{ av.bg }};" 
+               title="{{ av.name }}">
+            {{ av.emoji }}
+          </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="avatar" id="avatar-input" value="{{ player.avatar }}">
+      </div>
+
+      <!-- Rounds & Draw Time in 2 columns -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="num-rounds">Number of Rounds</label>
+          <select id="num-rounds" name="num_rounds" class="form-select">
+            <option value="2">2 Rounds (Quick)</option>
+            <option value="3" selected>3 Rounds (Standard)</option>
+            <option value="5">5 Rounds (Party)</option>
+            <option value="8">8 Rounds (Marathon)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="draw-time">Drawing Duration</label>
+          <select id="draw-time" name="draw_time" class="form-select">
+            <option value="30">30 Seconds (Blitz)</option>
+            <option value="45">45 Seconds (Fast)</option>
+            <option value="60" selected>60 Seconds (Standard)</option>
+            <option value="80">80 Seconds (Relaxed)</option>
+            <option value="120">120 Seconds (Masterpiece)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Word Difficulty & Category -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="difficulty">Word Difficulty</label>
+          <select id="difficulty" name="difficulty" class="form-select">
+            <option value="mixed" selected>Mixed (All Difficulties)</option>
+            <option value="easy">Easy (Simple Words)</option>
+            <option value="medium">Medium (Standard)</option>
+            <option value="hard">Hard (Challenging)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="category">Word Category</label>
+          <select id="category" name="category" class="form-select">
+            <option value="all" selected>All Categories</option>
+            {% for cat_key, cat_name in categories %}
+            <option value="{{ cat_key }}">{{ cat_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Custom Word Pack if available -->
+      {% if word_packs %}
+      <div class="form-group">
+        <label class="form-label" for="word-pack-id">Custom Word Pack (Optional)</label>
+        <select id="word-pack-id" name="word_pack_id" class="form-select">
+          <option value="">None (Use Standard Curated Words)</option>
+          {% for pack in word_packs %}
+          <option value="{{ pack.id }}">{{ pack.name }} ({{ pack.word_count }} words)</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <!-- Private Room toggle -->
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin: 1.25rem 0;">
+        <input type="checkbox" id="is-private" name="is_private" style="width: 18px; height: 18px; accent-color: var(--primary);">
+        <label for="is-private" style="font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+          Make this room private (hide from open room listings)
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 0.5rem;">
+        <span>🎮</span> Launch Game Room
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Avatar selection in create room form
+  document.querySelectorAll('.avatar-choice').forEach(choice => {
+    choice.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-choice').forEach(c => c.classList.remove('selected'));
+      choice.classList.add('selected');
+      document.getElementById('avatar-input').value = choice.dataset.key;
+      if (window.soundFx) window.soundFx.playPop();
+    });
+  });
+</script>
+{% endblock %}

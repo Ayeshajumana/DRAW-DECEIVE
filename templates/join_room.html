@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Room - DRAW & DECEIVE{% endblock %}
+
+{% block content %}
+<div style="max-width: 540px; margin: 1.5rem auto; width: 100%;">
+  <div class="card" style="padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem;">Join a Game</h1>
+      <p style="color: var(--text-muted);">Enter the 6-character room code to join your friends.</p>
+    </div>
+
+    <form action="{% url 'join_room' %}" method="POST">
+      {% csrf_token %}
+
+      <!-- Room Code -->
+      <div class="form-group">
+        <label class="form-label" for="room-code-input">Room Code</label>
+        <input type="text" id="room-code-input" name="code" class="form-input" 
+               placeholder="e.g. 7K2B9X" 
+               value="{{ target_code }}" 
+               maxlength="8" 
+               style="text-transform: uppercase; font-family: monospace; font-size: 1.4rem; font-weight: 900; letter-spacing: 3px; text-align: center;" 
+               required autofocus>
+      </div>
+
+      <!-- Player Identity Customization -->
+      <div class="form-group" style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 1.25rem;">
+        <label class="form-label" for="player-nickname">Your Nickname</label>
+        <input type="text" id="player-nickname" name="nickname" class="form-input" value="{{ player.nickname }}" maxlength="25" required>
+
+        <label class="form-label" style="margin-top: 0.85rem;">Select Your Avatar</label>
+        <div class="avatar-grid">
+          {% for av in avatars %}
+          <div class="avatar-choice {% if av.key == player.avatar %}selected{% endif %}" 
+               data-key="{{ av.key }}" 
+               style="background: {{ av.bg }};" 
+               title="{{ av.name }}">
+            {{ av.emoji }}
+          </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="avatar" id="avatar-input" value="{{ player.avatar }}">
+      </div>
+
+      <button type="submit" class="btn btn-secondary btn-lg" style="width: 100%; margin-top: 1.5rem;">
+        <span>🚀</span> Enter Lobby
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Avatar selection in join room form
+  document.querySelectorAll('.avatar-choice').forEach(choice => {
+    choice.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-choice').forEach(c => c.classList.remove('selected'));
+      choice.classList.add('selected');
+      document.getElementById('avatar-input').value = choice.dataset.key;
+      if (window.soundFx) window.soundFx.playPop();
+    });
+  });
+</script>
+{% endblock %}

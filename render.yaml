@@ -1,0 +1,27 @@
+# Render Blueprint for DRAW & DECEIVE (Real-Time Multiplayer Django Channels)
+services:
+  - type: web
+    name: draw-and-deceive
+    runtime: python
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate && python manage.py seed_words"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com,localhost,127.0.0.1"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: draw-redis
+          property: connectionString
+
+  - type: redis
+    name: draw-redis
+    ipAllowList: [] # internal access only
+    plan: free
+    maxmemoryPolicy: noeviction
