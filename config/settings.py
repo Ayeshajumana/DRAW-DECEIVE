@@ -24,6 +24,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.up.railway.app',
     'https://*.onrender.com',
     'https://*.fly.dev',
+    'https://*.github.dev',
+    'https://*.app.github.dev',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
