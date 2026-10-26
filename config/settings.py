@@ -17,6 +17,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://*.trycloudflare.com',
+    'https://*.koyeb.app',
+    'https://*.hf.space',
     'https://*.railway.app',
     'https://*.up.railway.app',
     'https://*.onrender.com',
